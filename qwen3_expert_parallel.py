@@ -245,115 +245,12 @@ def benchmark_expert_parallel_inference():
         print(f"  Tokens generated: 150")
         print(f"  Speed: ~{150 / (end_time - start_time):.1f} tokens/sec")
     else:
-        print(f"  Generation failed due to buffer format compatibility issue")
-        print(f"  Expert routing analysis completed successfully")
-    
-    # Analysis of expert parallelism benefits
-    print(f"\n" + "=" * 50)
-    print("Expert Parallelism Analysis")
-    print("=" * 50)
-    
-    total_params = 30_000_000_000  # 30B parameters
-    experts_per_device = model.args.num_experts // num_devices
-    memory_per_device = total_params // num_devices
-    
-    print(f"Memory Distribution:")
-    print(f"  Total parameters: {total_params:,}")
-    print(f"  Devices: {num_devices}")
-    print(f"  Experts per device: {experts_per_device}")
-    print(f"  Memory per device: ~{memory_per_device:,} parameters")
-    print(f"  Memory reduction: {num_devices}x")
-    
-    print(f"\nCompute Efficiency:")
-    print(f"  Total experts: {model.args.num_experts}")
-    print(f"  Active per token: {model.args.num_experts_per_tok}")
-    print(f"  Utilization: {model.args.num_experts_per_tok / model.args.num_experts:.1%}")
-    print(f"  Theoretical speedup: {model.args.num_experts / model.args.num_experts_per_tok:.1f}x")
-    
-    print(f"\nCommunication Requirements:")
-    hidden_size = model.args.hidden_size
-    print(f"  Token embeddings to broadcast: {hidden_size} floats per token")
-    print(f"  Expert outputs to aggregate: {model.args.num_experts_per_tok * hidden_size} floats per token")
-    print(f"  Communication overhead: Moderate (depends on network)")
-
-
-def demonstrate_load_balancing():
-    """Demonstrate load balancing analysis with different scenarios"""
-    
-    print(f"\n" + "=" * 60)
-    print("Load Balancing Analysis")
-    print("=" * 60)
-    
-    # Simulate different routing scenarios using MLX arrays
-    scenarios = [
-        ("Balanced routing", mx.array(np.random.choice(128, size=(2, 10, 8)))),
-        ("Skewed routing", mx.array(np.concatenate([
-            np.random.choice(10, size=(2, 8, 8)),  # First tokens prefer first 10 experts
-            np.random.choice(range(118, 128), size=(2, 2, 8))  # Last tokens prefer last 10 experts
-        ], axis=1))),
-        ("Hot expert scenario", mx.array(np.concatenate([
-            np.full((2, 8, 4), 0),  # Expert 0 is "hot"
-            np.random.choice(range(1, 128), size=(2, 8, 4))
-        ], axis=2)))
-    ]
-    
-    device_map = create_expert_device_mapping(128, 8)
-    
-    for scenario_name, expert_indices in scenarios:
-        print(f"\n{scenario_name}:")
-        
-        # Convert to numpy for analysis
-        mx.eval(expert_indices)
-        indices_np = np.asarray(expert_indices)
-        
-        # Analyze device loads
-        device_loads = {d: 0 for d in range(8)}
-        expert_counts = {}
-        
-        for b in range(indices_np.shape[0]):
-            for s in range(indices_np.shape[1]):
-                for k in range(indices_np.shape[2]):
-                    expert_id = int(indices_np[b, s, k])
-                    device_id = device_map[expert_id]
-                    
-                    expert_counts[expert_id] = expert_counts.get(expert_id, 0) + 1
-                    device_loads[device_id] += 1
-        
-        # Calculate metrics
-        max_load = max(device_loads.values())
-        min_load = min(device_loads.values())
-        avg_load = sum(device_loads.values()) / len(device_loads)
-        load_balance_ratio = min_load / max_load if max_load > 0 else 1.0
-        
-        active_experts = len(expert_counts)
-        utilization = active_experts / 128
-        
-        print(f"  Active experts: {active_experts}/128 ({utilization:.1%})")
-        print(f"  Load balance ratio: {load_balance_ratio:.3f}")
-        print(f"  Device loads: {list(device_loads.values())}")
-        print(f"  Load std dev: {np.std(list(device_loads.values())):.1f}")
-
+        print(f"  Generation failed")
 
 if __name__ == "__main__":
     try:
         # Run the expert parallelism benchmark
         benchmark_expert_parallel_inference()
-        
-        # Demonstrate load balancing analysis
-        demonstrate_load_balancing()
-        
-        print(f"\n" + "=" * 80)
-        print("Expert Parallelism Integration Complete!")
-        print("=" * 80)
-        
-        print("\nKey Takeaways:")
-        print("1. Expert parallelism can distribute 30B parameter model across 8 devices")
-        print("2. Each device handles ~16 experts (3.75B parameters each)")
-        print("3. Only ~6% of experts are active per token (8/128)")
-        print("4. Load balancing is crucial for optimal performance")
-        print("5. Communication overhead scales with hidden size and sequence length")
-        print("6. Real implementation would need efficient expert weight loading/caching")
-        print("7. Analysis can be enabled/disabled to avoid buffer format issues during generation")
         
     except Exception as e:
         print(f"\nError during benchmark: {e}")
