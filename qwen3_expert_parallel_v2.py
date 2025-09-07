@@ -181,6 +181,14 @@ class InstrumentedQwen3MoeSparseMoeBlock(nn.Module):
                 device_tracker.record_call(self.layer_id, expert_id, device_id)
         
         # Step 3: Compute expert outputs using original switch_mlp
+        #print(x.shape)
+        #print(inds.shape)
+        
+        # (bsz, seq_len, ...)
+        # (1, 17, 2048)
+        # (1, 17, 8)
+        
+        
         y = self._original_switch_mlp(x, inds)
         y = (y * scores[..., None]).sum(axis=-2)
         
@@ -212,6 +220,7 @@ def patch_individual_experts(model, num_devices: int = 4):
         if hasattr(layer.mlp, 'num_experts'):  # This is a MoE layer
             # Replace with instrumented version
             original_moe = layer.mlp
+            print(original_moe)
             layer.mlp = InstrumentedQwen3MoeSparseMoeBlock(
                 original_moe, 
                 layer_id=layer_idx,
@@ -242,7 +251,8 @@ def benchmark_expert_distribution():
     print("=" * 80)
     
     # Load the model
-    checkpoint = "mlx-community/Qwen3-Coder-30B-A3B-Instruct-4bit"
+    # checkpoint = "mlx-community/Qwen3-Coder-30B-A3B-Instruct-4bit"
+    checkpoint = "mlx-community/Qwen3-30B-A3B-Instruct-2507-bf16"
     print(f"Loading model: {checkpoint}")
     model, tokenizer = load(path_or_hf_repo=checkpoint)
     
