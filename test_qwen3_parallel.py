@@ -3,12 +3,8 @@
 Test ParallelSwitchLinear with real Qwen3 MoE model.
 """
 
-import sys
 import time
 from typing import Dict
-
-# Add mlx-lm to path
-sys.path.append('/Users/oleksandr/projects/mlx-lm')
 
 from mlx_lm.utils import load
 from mlx_lm.generate import generate

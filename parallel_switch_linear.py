@@ -257,8 +257,6 @@ def test_parallel_switch_linear():
     Unit test comparing SwitchLinear with ParallelSwitchLinear.
     """
     # Import SwitchLinear from mlx_lm
-    import sys
-    sys.path.append('/Users/oleksandr/projects/mlx-lm')
     from mlx_lm.models.switch_layers import SwitchLinear
     
     print("Testing ParallelSwitchLinear equivalence...")
@@ -360,8 +358,6 @@ def patch_model_for_expert_parallelism(
     Returns:
         The patched model
     """
-    import sys
-    sys.path.append('/Users/oleksandr/projects/mlx-lm')
     from mlx_lm.models.switch_layers import SwitchGLU, SwitchLinear
     
     # Default: all experts on node 0
@@ -393,13 +389,7 @@ def patch_model_for_expert_parallelism(
                             parallel_proj = ParallelSwitchLinear.from_switch_linear(
                                 orig_proj, expert_mapping
                             )
-                            setattr(switch_glu, proj_name, parallel_proj)
-                            print(f"  - Replaced {proj_name} with ParallelSwitchLinear")
-                            
-                            # Print distribution info
-                            for node_id, experts in parallel_proj.node_to_experts.items():
-                                print(f"    Node {node_id}: experts {experts}")
-    
+                            setattr(switch_glu, proj_name, parallel_proj)    
     return model
 
 
