@@ -55,6 +55,10 @@ class ParallelSwitchLinearNode(nn.Module):
             Processed tokens
         """
         # Use gather_mm for efficient batched matrix multiplication
+        print(f'< {x.shape}')
+        print(f'* {self.weight.shape}')
+        print(f'idx = {local_indices.shape}')
+
         x = mx.gather_mm(
             x,
             self.weight.swapaxes(-1, -2),
@@ -65,7 +69,8 @@ class ParallelSwitchLinearNode(nn.Module):
         
         if "bias" in self:
             x = x + mx.expand_dims(self.bias[local_indices], -2)
-            
+
+        print(f'> {x.shape}')
         return x
 
 
