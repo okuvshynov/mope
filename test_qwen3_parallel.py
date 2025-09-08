@@ -160,6 +160,20 @@ def test_patched_model_inference(model_path: str = "mlx-community/Qwen3-30B-A3B-
     print(f"Time after:  {time_after:.2f}s")
     print(f"Overhead: {(time_after - time_before) / time_before * 100:.1f}%")
     
+
+    # Test inference AFTER patching
+    print("\n" + "="*60)
+    print("Testing inference AFTER patching and warmup...")
+    
+    start_time = time.time()
+    response_after = generate(
+        model, tokenizer, prompt=prompt,
+        max_tokens=20, verbose=False
+    )
+    time_after = time.time() - start_time
+    print(f"Response: {response_after}")
+    print(f"Time: {time_after:.2f}s")
+
     # Memory analysis
     print("\n" + "="*60)
     print("Memory distribution analysis:")

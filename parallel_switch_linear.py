@@ -403,40 +403,5 @@ def patch_model_for_expert_parallelism(
     return model
 
 
-def test_model_patching():
-    """
-    Test patching a real model with ParallelSwitchLinear.
-    """
-    import sys
-    sys.path.append('/Users/oleksandr/projects/mlx-lm')
-    
-    print("Testing model patching...")
-    
-    # We'll create a minimal test with mock model structure
-    # In real use, this would be applied to a loaded Qwen model
-    
-    # Create mock expert mapping: distribute 8 experts across 2 nodes
-    expert_to_node_mapping = {
-        # For each MoE layer, specify expert distribution
-        0: {0: 0, 1: 0, 2: 0, 3: 0, 4: 1, 5: 1, 6: 1, 7: 1},  # Layer 0: 4 experts per node
-        1: {0: 0, 1: 0, 2: 1, 3: 1, 4: 1, 5: 0, 6: 0, 7: 1},  # Layer 1: custom distribution
-    }
-    
-    print("\nExpert distribution plan:")
-    for layer_idx, mapping in expert_to_node_mapping.items():
-        print(f"Layer {layer_idx}:")
-        nodes = {}
-        for expert, node in mapping.items():
-            if node not in nodes:
-                nodes[node] = []
-            nodes[node].append(expert)
-        for node, experts in nodes.items():
-            print(f"  Node {node}: experts {experts}")
-    
-    print("\n✅ Model patching test completed!")
-
-
 if __name__ == "__main__":
     test_parallel_switch_linear()
-    print("\n" + "="*60 + "\n")
-    test_model_patching()
